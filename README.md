@@ -187,23 +187,32 @@ The doc in [README.zh-CN.md](README.zh-CN.md) describes extended scenarios (AI t
 
 ## Agent Skills Module
 
-The MCP protocol exposes full tool lists and parameter schemas to the AI, which can **consume many tokens**. The project adds a **Skill** module (`demo/.cursor/skills`) used together with MCP: load skill docs on demand instead of all tool schemas at once.
+The MCP protocol exposes full tool lists and parameter schemas to the AI, which can **consume many tokens**. The project adds a **Skill** module (`unity-package/Skills/unity3d-skill/`) used together with MCP: load skill docs on demand instead of all tool schemas at once.
 
 ### How it works
 
-- **Skill as document**: Each skill is a `SKILL.md` (name, description, parameters, examples).
-- **1:1 with MCP**: Skills describe how to call a tool via MCP (e.g. `async_call` / `batch_call` + `func` and `args`), without re-implementing logic.
-- **On-demand load**: The agent reads only the relevant SKILL file when needed, instead of loading every tool schema.
+- **Unified skill entry**: A single `SKILL.md` provides a function overview (32 functions across 7 categories: Editor & Preferences, Code Execution, Scene & Hierarchy, GameObject & Component Editing, Project & Asset Management, UI & Layout, Gameplay & Networking).
+- **JSON Schema references**: Each function has a dedicated JSON Schema file in `references/<func_name>.json`, containing full `args` schema, `actions` enum (with conditional params), and `response` format.
+- **On-demand load**: The agent reads the overview in `SKILL.md` to find the right function, then loads the specific `references/<func_name>.json` for detailed parameter info — instead of loading all 32 tool schemas at once.
 
 ### With MCP
 
 - **MCP** handles tool discovery and execution; **Skills** describe when and how to pass arguments.
-- Reference skill paths in Cursor Rules or Agent config so the agent consults the right SKILL and then calls MCP.
-- This keeps full MCP capability while **reducing tokens** by not keeping 40+ tool descriptions in context.
+- Reference `SKILL.md` in Cursor Rules or Agent config so the agent consults the overview and loads the relevant JSON schema on demand, then calls MCP.
+- This keeps full MCP capability while **reducing tokens** by not keeping 32+ tool descriptions in context.
 
-### Recommendation
+### File structure
 
-Skills live under `demo/.cursor/skills` (e.g. `unity-async-call`, `unity-hierarchy-create`). No need to list every skill in docs; document that “load the right SKILL.md from `.cursor/skills` on demand” so the agent can use skills and MCP together with less context.
+```
+unity-package/Skills/unity3d-skill/
+├── SKILL.md                    # Function overview & category summary
+└── references/                 # JSON Schema for each function
+    ├── base_editor.json
+    ├── hierarchy_create.json
+    ├── gameplay.json
+    ├── request_http.json
+    └── ... (32 schemas total)
+```
 
 ---
 

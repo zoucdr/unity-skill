@@ -956,23 +956,32 @@ def batch_translate_localization(source_file, target_langs=["en", "ja", "ko"]):
 
 ## Agent 技能模块
 
-MCP 协议会向 AI 提供完整的工具列表与参数 Schema，在工具数量较多时**占用大量 Token**。为降低上下文消耗，项目增加了 **Skill 模块**（`demo/.cursor/skills`），与 MCP 配合使用，实现「按需加载、用时再读」。
+MCP 协议会向 AI 提供完整的工具列表与参数 Schema，在工具数量较多时**占用大量 Token**。为降低上下文消耗，项目增加了 **Skill 模块**（`unity-package/Skills/unity3d-skill/`），与 MCP 配合使用，实现「按需加载、用时再读」。
 
 ### 实现方式
 
-- **技能即文档**：每个技能对应一个 `SKILL.md` 文件，包含名称、描述、参数说明和调用示例。
-- **与 MCP 一一对应**：技能描述的是「如何通过 MCP 调用某工具」（如 `async_call` / `batch_call` + `func` 与 `args`），不重复实现逻辑。
-- **按需加载**：Agent 根据用户任务或规则，仅在需要时读取对应技能的 SKILL 文件，而不是一次性加载全部工具 Schema。
+- **统一技能入口**：一个 `SKILL.md` 提供 32 个函数的概览摘要，按 7 大分类组织（编辑器与偏好设置、代码执行、场景与层级、GameObject与组件编辑、项目与资源管理、UI与布局、游戏与网络）。
+- **JSON Schema 引用**：每个函数在 `references/<func_name>.json` 中有独立的 JSON Schema 文件，包含完整的 `args` 参数定义、`actions` 枚举（含条件参数）和 `response` 响应格式。
+- **按需加载**：Agent 先阅读 `SKILL.md` 概览定位目标函数，再按需加载对应的 `references/<func_name>.json` 获取详细参数信息，而非一次性加载全部 32 个工具 Schema。
 
 ### 与 MCP 系统的结合
 
 - **MCP** 仍负责实际的工具发现与调用；**Skill** 负责「何时用、怎么传参」的说明。
-- 可在 Cursor Rules 或 Agent 配置中引用技能路径，使 Agent 在相关场景下优先查阅对应 SKILL，再通过 MCP 发起调用。
-- 这样既保留 MCP 的完整能力，又避免把 40+ 工具的完整描述常驻上下文，**显著节省 Token**。
+- 可在 Cursor Rules 或 Agent 配置中引用 `SKILL.md`，使 Agent 先查阅概览、按需加载 JSON Schema，再通过 MCP 发起调用。
+- 这样既保留 MCP 的完整能力，又避免把 32+ 工具的完整描述常驻上下文，**显著节省 Token**。
 
-### 使用建议
+### 文件结构
 
-技能文件位于 `demo/.cursor/skills`，按功能分子目录（如 `unity-async-call`、`unity-hierarchy-create` 等）。无需在文档中列举全部技能清单；只需在项目或规则中说明「通过 `.cursor/skills` 按需加载对应 SKILL.md」，即可让 Agent 在需要时自行读取，实现与 MCP 的轻量结合。
+```
+unity-package/Skills/unity3d-skill/
+├── SKILL.md                    # 函数概览与分类摘要
+└── references/                 # 每个函数的 JSON Schema 定义
+    ├── base_editor.json
+    ├── hierarchy_create.json
+    ├── gameplay.json
+    ├── request_http.json
+    └── ... (共 32 个 Schema)
+```
 
 ---
 
