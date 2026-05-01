@@ -1,0 +1,32 @@
+{
+  "func": "asset_index",
+  "description": "Resource index management for Unity projects",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["add", "remove", "update", "search", "categories", "locate", "details", "show", "lost"], "description": "Operation type" },
+      "id": { "type": "integer", "description": "Unique resource ID (for remove, update, locate operations)" },
+      "name": { "type": "string", "description": "Resource name" },
+      "path": { "type": "string", "description": "Resource path" },
+      "category": { "type": "string", "description": "Category label for organizing resources (default: \"默认\")" },
+      "note": { "type": "string", "description": "Note information" },
+      "pattern": { "type": "string", "description": "Regex pattern (for search operation, matches name, note, path)" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "add", "description": "Add a new resource to index", "requiredParams": ["action", "name", "path"] },
+    { "value": "remove", "description": "Remove resource from index", "requiredParams": ["action", "id"] },
+    { "value": "update", "description": "Update existing resource info", "requiredParams": ["action", "id"] },
+    { "value": "search", "description": "Search resources by pattern", "requiredParams": ["action", "pattern"] },
+    { "value": "categories", "description": "List all categories", "requiredParams": ["action"] },
+    { "value": "locate", "description": "Locate resource by ID", "requiredParams": ["action", "id"] },
+    { "value": "details", "description": "Get detailed resource info", "requiredParams": ["action"] },
+    { "value": "show", "description": "Show all resources", "requiredParams": ["action"] },
+    { "value": "lost", "description": "Find resources with broken references", "requiredParams": ["action"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

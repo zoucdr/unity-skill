@@ -1,0 +1,43 @@
+{
+  "func": "request_http",
+  "description": "Send HTTP requests and download/upload files",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["get", "post", "put", "delete", "download", "upload", "ping", "batch_download"], "description": "HTTP operation" },
+      "url": { "type": "string", "description": "Request URL" },
+      "method": { "type": "string", "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"], "description": "HTTP method" },
+      "data": { "type": "object", "description": "Request data (JSON format for POST/PUT)" },
+      "headers": { "type": "object", "description": "Request headers dictionary" },
+      "query_params": { "type": "object", "description": "Query parameters (key-value)" },
+      "content_type": { "type": "string", "enum": ["application/json", "application/xml", "text/plain", "multipart/form-data", "application/x-www-form-urlencoded"], "description": "Content type" },
+      "file_path": { "type": "string", "description": "File path (for upload)" },
+      "save_path": { "type": "string", "description": "Save path (for download, relative to Assets or absolute)" },
+      "auth_token": { "type": "string", "description": "Bearer token" },
+      "basic_auth": { "type": "string", "description": "Basic auth (username:password)" },
+      "user_agent": { "type": "string", "description": "User agent string" },
+      "timeout": { "type": "integer", "description": "Timeout in seconds (default: 30)" },
+      "retry_count": { "type": "integer", "description": "Retry count (default: 0)" },
+      "retry_delay": { "type": "integer", "description": "Retry delay in seconds (default: 1)" },
+      "follow_redirects": { "type": "boolean", "description": "Follow redirects (default: true)" },
+      "accept_certificates": { "type": "boolean", "description": "Accept all certificates (for testing)" },
+      "encoding": { "type": "string", "enum": ["UTF-8", "ASCII", "Unicode", "UTF-32"], "description": "Text encoding" },
+      "urls": { "type": "array", "items": { "type": "string" }, "description": "URL array (for batch_download)" }
+    },
+    "required": ["action", "url"]
+  },
+  "actions": [
+    { "value": "get", "description": "HTTP GET request", "requiredParams": ["action", "url"] },
+    { "value": "post", "description": "HTTP POST request", "requiredParams": ["action", "url"] },
+    { "value": "put", "description": "HTTP PUT request", "requiredParams": ["action", "url"] },
+    { "value": "delete", "description": "HTTP DELETE request", "requiredParams": ["action", "url"] },
+    { "value": "download", "description": "Download file", "requiredParams": ["action", "url", "save_path"] },
+    { "value": "upload", "description": "Upload file", "requiredParams": ["action", "url", "file_path"] },
+    { "value": "ping", "description": "Ping URL", "requiredParams": ["action", "url"] },
+    { "value": "batch_download", "description": "Download multiple files", "requiredParams": ["action", "urls"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

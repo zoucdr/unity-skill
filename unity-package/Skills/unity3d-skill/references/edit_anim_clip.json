@@ -1,0 +1,48 @@
+{
+  "func": "edit_anim_clip",
+  "description": "Manage animation clips",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["create", "modify", "duplicate", "delete", "get_info", "search", "set_curve", "set_events"], "description": "Operation type" },
+      "path": { "type": "string", "description": "Animation clip asset path" },
+      "query": { "type": "string", "description": "Search query (for search action)" },
+      "recursive": { "type": "boolean", "description": "Recursive search (default: false)" },
+      "source_path": { "type": "string", "description": "Source animation path (for duplicate)" },
+      "destination": { "type": "string", "description": "Destination path" },
+      "force": { "type": "boolean", "description": "Force execution (default: false)" },
+      "length": { "type": "number", "description": "Animation length (seconds)" },
+      "loop_time": { "type": "boolean", "description": "Loop animation" },
+      "loop_pose": { "type": "boolean", "description": "Loop pose" },
+      "frame_rate": { "type": "number", "description": "Frame rate" },
+      "mirror": { "type": "boolean", "description": "Mirror animation" },
+      "cycle_offset": { "type": "number", "description": "Cycle offset" },
+      "body_orientation": { "type": "number", "description": "Body orientation" },
+      "height_from_ground": { "type": "boolean", "description": "Height from ground" },
+      "lock_root_height_y": { "type": "boolean", "description": "Lock root height Y" },
+      "lock_root_rotation_y": { "type": "boolean", "description": "Lock root rotation Y" },
+      "lock_root_rotation_offset_y": { "type": "boolean", "description": "Lock root rotation offset Y" },
+      "root_height_offset_y": { "type": "number", "description": "Root height offset Y" },
+      "root_height_offset_y_active": { "type": "boolean", "description": "Enable root height offset" },
+      "root_rotation_offset_y": { "type": "number", "description": "Root rotation offset Y" },
+      "keep_original_orientation_y": { "type": "boolean", "description": "Keep original orientation Y" },
+      "curves": { "type": "object", "description": "Animation curve data" },
+      "events": { "type": "array", "description": "Animation events" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "create", "description": "Create animation clip", "requiredParams": ["action", "path"] },
+    { "value": "modify", "description": "Modify animation clip", "requiredParams": ["action", "path"] },
+    { "value": "duplicate", "description": "Duplicate animation clip", "requiredParams": ["action", "source_path", "destination"] },
+    { "value": "delete", "description": "Delete animation clip", "requiredParams": ["action", "path"] },
+    { "value": "get_info", "description": "Get animation clip info", "requiredParams": ["action", "path"] },
+    { "value": "search", "description": "Search animation clips", "requiredParams": ["action", "query"] },
+    { "value": "set_curve", "description": "Set animation curve", "requiredParams": ["action", "path", "curves"] },
+    { "value": "set_events", "description": "Set animation events", "requiredParams": ["action", "path", "events"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

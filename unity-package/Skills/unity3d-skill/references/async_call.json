@@ -1,0 +1,22 @@
+{
+  "func": "async_call",
+  "description": "Asynchronous function call support for Unity",
+  "args": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string", "description": "Unique identifier for the async call" },
+      "type": { "type": "string", "enum": ["in", "out"], "description": "Operation type: in (start call), out (get result)" },
+      "func": { "type": "string", "description": "Function name (required when type is in)" },
+      "args": { "type": "object", "description": "Function arguments (required when type is in)" }
+    },
+    "required": ["id", "type"]
+  },
+  "actions": [
+    { "value": "in", "description": "Initiates an asynchronous function call", "requiredParams": ["id", "type", "func", "args"] },
+    { "value": "out", "description": "Retrieves the result of a previous async call", "requiredParams": ["id", "type"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

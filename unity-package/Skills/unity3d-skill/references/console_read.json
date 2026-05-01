@@ -1,0 +1,24 @@
+{
+  "func": "console_read",
+  "description": "Read or clear Unity Editor console logs",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["get", "get_full", "clear"], "description": "Operation type" },
+      "types": { "type": "string", "description": "Comma-separated: error, warning, log; omit or \"all\" for all" },
+      "count": { "type": "integer", "description": "Max entries 1-1000" },
+      "filterText": { "type": "string", "description": "Only entries containing this text" },
+      "format": { "type": "string", "enum": ["plain", "detailed", "json"], "description": "Output format (default: detailed)" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "get", "description": "Logs without stack trace", "requiredParams": ["action"] },
+    { "value": "get_full", "description": "Logs with stack trace", "requiredParams": ["action"] },
+    { "value": "clear", "description": "Clear console", "requiredParams": ["action"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

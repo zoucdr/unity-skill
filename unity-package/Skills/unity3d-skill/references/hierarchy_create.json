@@ -1,0 +1,36 @@
+{
+  "func": "hierarchy_create",
+  "description": "Create game objects in scene hierarchy",
+  "args": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string", "description": "Game object name" },
+      "source": { "type": "string", "enum": ["primitive", "prefab", "copy", "menu", "empty"], "description": "Source type" },
+      "parent": { "type": "string", "description": "Parent object name or path" },
+      "parent_id": { "type": "string", "description": "Parent object unique ID" },
+      "position": { "type": "array", "items": { "type": "number" }, "description": "Position [x, y, z]" },
+      "rotation": { "type": "array", "items": { "type": "number" }, "description": "Rotation [x, y, z]" },
+      "scale": { "type": "array", "items": { "type": "number" }, "description": "Scale [x, y, z]" },
+      "layer": { "type": "string", "description": "Game object layer" },
+      "tag": { "type": "string", "description": "Game object tag" },
+      "set_active": { "type": "boolean", "description": "Set active state" },
+      "prefab_path": { "type": "string", "description": "Prefab path (for prefab source)" },
+      "copy_source": { "type": "string", "description": "Source object to copy (for copy source)" },
+      "menu_path": { "type": "string", "description": "Menu path (for menu source)" },
+      "primitive_type": { "type": "string", "enum": ["Cube", "Sphere", "Capsule", "Cylinder", "Plane", "Quad"], "description": "Primitive type (for primitive source)" },
+      "save_as_prefab": { "type": "boolean", "description": "Save as prefab" }
+    },
+    "required": ["name", "source"]
+  },
+  "actions": [
+    { "value": "primitive", "description": "Create primitive object (Cube, Sphere, etc.)", "requiredParams": ["name", "source", "primitive_type"] },
+    { "value": "prefab", "description": "Instantiate from prefab", "requiredParams": ["name", "source", "prefab_path"] },
+    { "value": "copy", "description": "Copy existing object", "requiredParams": ["name", "source", "copy_source"] },
+    { "value": "menu", "description": "Create from Unity menu", "requiredParams": ["name", "source", "menu_path"] },
+    { "value": "empty", "description": "Create empty game object", "requiredParams": ["name", "source"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

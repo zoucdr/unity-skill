@@ -1,0 +1,25 @@
+{
+  "func": "python_runner",
+  "description": "Execute Python scripts in Unity environment",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["run", "execute_file", "eval"], "description": "Operation type" },
+      "script": { "type": "string", "description": "Python script to execute" },
+      "file_path": { "type": "string", "description": "Python file path to execute" },
+      "args": { "type": "object", "description": "Arguments to pass to script" },
+      "timeout": { "type": "integer", "description": "Timeout in seconds (default: 60)" },
+      "working_dir": { "type": "string", "description": "Working directory" }
+    },
+    "required": ["action", "script"]
+  },
+  "actions": [
+    { "value": "run", "description": "Run Python script inline", "requiredParams": ["action", "script"] },
+    { "value": "execute_file", "description": "Execute Python file", "requiredParams": ["action", "script"] },
+    { "value": "eval", "description": "Quick Python expression evaluation", "requiredParams": ["action", "script"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

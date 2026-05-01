@@ -1,0 +1,38 @@
+{
+  "func": "project_operate",
+  "description": "Manage Unity assets",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["import", "modify", "move", "duplicate", "rename", "get_info", "create_folder", "reload", "select", "ping", "select_depends", "select_usage", "tree"], "description": "Operation type" },
+      "path": { "type": "string", "description": "Asset path (Unity standard format)" },
+      "destination": { "type": "string", "description": "Destination path (for move/duplicate)" },
+      "force": { "type": "boolean", "description": "Force operation (overwrite existing)" },
+      "properties": { "type": "object", "description": "Asset properties dictionary" },
+      "refresh_type": { "type": "string", "enum": ["all", "assets", "scripts"], "description": "Refresh type (default: all)" },
+      "save_before_refresh": { "type": "boolean", "description": "Save all before refresh (default: true)" },
+      "include_indirect": { "type": "boolean", "description": "Include indirect dependencies (default: false)" },
+      "max_results": { "type": "integer", "description": "Maximum results (default: 100)" }
+    },
+    "required": ["action", "path"]
+  },
+  "actions": [
+    { "value": "import", "description": "Import asset", "requiredParams": ["action", "path"] },
+    { "value": "modify", "description": "Modify asset properties", "requiredParams": ["action", "path", "properties"] },
+    { "value": "move", "description": "Move asset", "requiredParams": ["action", "path", "destination"] },
+    { "value": "duplicate", "description": "Duplicate asset", "requiredParams": ["action", "path", "destination"] },
+    { "value": "rename", "description": "Rename asset", "requiredParams": ["action", "path"] },
+    { "value": "get_info", "description": "Get asset info", "requiredParams": ["action", "path"] },
+    { "value": "create_folder", "description": "Create folder", "requiredParams": ["action", "path"] },
+    { "value": "reload", "description": "Reload asset", "requiredParams": ["action", "path"] },
+    { "value": "select", "description": "Select asset", "requiredParams": ["action", "path"] },
+    { "value": "ping", "description": "Ping (highlight) asset", "requiredParams": ["action", "path"] },
+    { "value": "select_depends", "description": "Select dependencies", "requiredParams": ["action", "path"] },
+    { "value": "select_usage", "description": "Select usage", "requiredParams": ["action", "path"] },
+    { "value": "tree", "description": "Show asset tree", "requiredParams": ["action", "path"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

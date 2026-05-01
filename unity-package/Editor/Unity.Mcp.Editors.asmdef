@@ -1,0 +1,18 @@
+{
+    "name": "UniMcp.Editors",
+    "rootNamespace": "",
+    "references": [
+        "GUID:9ac421b6e9e0ad248a1f2cc1072766fe"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

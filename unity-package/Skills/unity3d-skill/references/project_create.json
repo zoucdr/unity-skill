@@ -1,0 +1,31 @@
+{
+  "func": "project_create",
+  "description": "Create assets in project window",
+  "args": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string", "description": "Asset file name" },
+      "source": { "type": "string", "enum": ["menu", "empty", "template", "copy"], "description": "Operation type" },
+      "folder_path": { "type": "string", "description": "Target folder path (relative to Assets)" },
+      "extension": { "type": "string", "description": "File extension (without dot): cs, mat, prefab, asset, txt, json" },
+      "content": { "type": "string", "description": "File content (for empty type)" },
+      "copy_source": { "type": "string", "description": "Source resource path to copy" },
+      "template_path": { "type": "string", "description": "Template file path" },
+      "menu_path": { "type": "string", "description": "Menu path" },
+      "open_after_create": { "type": "boolean", "description": "Open file after creation" },
+      "select_after_create": { "type": "boolean", "description": "Select file after creation" },
+      "force": { "type": "boolean", "description": "Force overwrite existing file" }
+    },
+    "required": ["name", "source"]
+  },
+  "actions": [
+    { "value": "menu", "description": "Create from Unity menu", "requiredParams": ["name", "source", "menu_path"] },
+    { "value": "empty", "description": "Create empty file", "requiredParams": ["name", "source"] },
+    { "value": "template", "description": "Create from template", "requiredParams": ["name", "source", "template_path"] },
+    { "value": "copy", "description": "Copy from existing resource", "requiredParams": ["name", "source", "copy_source"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

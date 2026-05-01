@@ -1,0 +1,24 @@
+{
+  "func": "code_runner",
+  "description": "Execute C# code at runtime in Unity",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["run", "compile", "eval"], "description": "Operation type" },
+      "code": { "type": "string", "description": "C# code to execute" },
+      "context": { "type": "object", "description": "Execution context/variables" },
+      "timeout": { "type": "integer", "description": "Timeout in seconds (default: 30)" },
+      "assembly_name": { "type": "string", "description": "Target assembly name" }
+    },
+    "required": ["action", "code"]
+  },
+  "actions": [
+    { "value": "run", "description": "Compile and run C# code", "requiredParams": ["action", "code"] },
+    { "value": "compile", "description": "Compile code without running", "requiredParams": ["action", "code"] },
+    { "value": "eval", "description": "Quick evaluation expression", "requiredParams": ["action", "code"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

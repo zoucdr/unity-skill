@@ -1,0 +1,19 @@
+{
+  "func": "cmd_tool",
+  "description": "Execute system CMD commands",
+  "args": {
+    "type": "object",
+    "properties": {
+      "cmd": { "type": "string", "description": "CMD command to execute" },
+      "args": { "type": "array", "items": { "type": "string" }, "description": "Command arguments" },
+      "env": { "type": "object", "description": "Environment variables" },
+      "timeout": { "type": "integer", "description": "Timeout in seconds (default: 30)" },
+      "working_dir": { "type": "string", "description": "Working directory" }
+    },
+    "required": ["cmd"]
+  },
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "func": "hierarchy_search",
+  "description": "Search and find game objects in scene hierarchy",
+  "args": {
+    "type": "object",
+    "properties": {
+      "search_type": { "type": "string", "enum": ["by_name", "by_id", "by_tag", "by_layer", "by_component", "by_query"], "description": "Search method" },
+      "query": { "type": "string", "description": "Search condition (ID, name, or path, supports wildcard *)" },
+      "include_inactive": { "type": "boolean", "description": "Include inactive objects (default: false)" },
+      "include_hierarchy": { "type": "boolean", "description": "Include full hierarchy data (default: false)" },
+      "select_many": { "type": "boolean", "description": "Find all matches (default: false)" },
+      "use_regex": { "type": "boolean", "description": "Use regular expressions (default: false)" }
+    },
+    "required": ["search_type", "query"]
+  },
+  "actions": [
+    { "value": "by_name", "description": "Search by object name", "requiredParams": ["search_type", "query"] },
+    { "value": "by_id", "description": "Search by instance ID", "requiredParams": ["search_type", "query"] },
+    { "value": "by_tag", "description": "Search by tag", "requiredParams": ["search_type", "query"] },
+    { "value": "by_layer", "description": "Search by layer", "requiredParams": ["search_type", "query"] },
+    { "value": "by_component", "description": "Search by component", "requiredParams": ["search_type", "query"] },
+    { "value": "by_query", "description": "Query-based search", "requiredParams": ["search_type", "query"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "func": "manage_package",
+  "description": "Manage Unity packages",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["install", "remove", "update", "list", "search"], "description": "Operation type" },
+      "package_name": { "type": "string", "description": "Package name (e.g., com.unity.render-pipelines.universal)" },
+      "version": { "type": "string", "description": "Package version" },
+      "registry": { "type": "string", "description": "Package registry URL" },
+      "scope": { "type": "string", "description": "Package scope" },
+      "cached": { "type": "boolean", "description": "Use cached version" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "install", "description": "Install a package", "requiredParams": ["action", "package_name"] },
+    { "value": "remove", "description": "Remove a package", "requiredParams": ["action", "package_name"] },
+    { "value": "update", "description": "Update a package", "requiredParams": ["action", "package_name"] },
+    { "value": "list", "description": "List installed packages", "requiredParams": ["action"] },
+    { "value": "search", "description": "Search packages in registry", "requiredParams": ["action"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

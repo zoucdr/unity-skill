@@ -1,0 +1,621 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEditor;
+using System.Linq;
+using System;
+using System.Threading;
+namespace UniMcp.Models
+{
+    [FilePath("Library/McpExecuteRecordObject.asset", FilePathAttribute.Location.ProjectFolder)]
+    public class McpExecuteRecordObject : ScriptableSingleton<McpExecuteRecordObject>
+    {
+        public List<McpExecuteRecord> records = new List<McpExecuteRecord>();
+        public List<McpExecuteRecordGroup> recordGroups = new List<McpExecuteRecordGroup>();
+        public string currentGroupId = "default"; // 当前选中的分组ID
+        public bool useGrouping = true; // 是否启用分组功能（默认启用）
+
+        // HTTP请求记录
+        public List<HttpRequestRecord> httpRequestRecords = new List<HttpRequestRecord>();
+
+        // 初始化标记，确保只初始化一次
+        private bool isInitialized = false;
+
+        // 主线程调度器
+        private static readonly Queue<System.Action> mainThreadActions = new Queue<System.Action>();
+        private static readonly object mainThreadLock = new object();
+        private static int mainThreadId;
+
+        // HTTP请求记录线程安全锁
+        private readonly object httpRecordsLock = new object();
+        [System.Serializable]
+        public class McpExecuteRecord
+        {
+            public string name;
+            public string cmd;
+            public string result;
+            public string error;
+            public string timestamp;
+            public bool success;
+            public double duration; // 执行时间（毫秒）
+            public string source; // 记录来源："MCP Client" 或 "Debug Window"
+        }
+        [System.Serializable]
+        public class McpExecuteRecordGroup
+        {
+            public string id; // 分组唯一ID
+            public string name; // 分组显示名称
+            public string description; // 分组描述
+            public List<McpExecuteRecord> records = new List<McpExecuteRecord>();
+            public System.DateTime createdTime; // 创建时间
+            public bool isDefault; // 是否为默认分组
+        }
+
+        [System.Serializable]
+        public class HttpRequestRecord
+        {
+            public string id; // 请求唯一ID
+            public string endPoint; // 客户端端点
+            public DateTime requestTime; // 请求开始时间
+            public DateTime responseTime; // 请求完成时间
+            public int requestCount; // 该客户端的请求次数
+            public string requestContent; // 请求内容
+            public string responseContent; // 响应内容
+            public bool success; // 是否成功
+            public double duration; // 处理时长（毫秒）
+            public string httpMethod; // HTTP方法
+            public int statusCode; // HTTP状态码
+        }
+        public void addRecord(string name, string cmd, string result, string error)
+        {
+            records.Add(new McpExecuteRecord()
+            {
+                name = name,
+                cmd = cmd,
+                result = result,
+                error = error,
+                timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                success = string.IsNullOrEmpty(error),
+                duration = 0,
+                source = "Legacy"
+            });
+            saveRecords(); // 确保保存
+        }
+
+        public void addRecord(string name, string cmd, string result, string error, double duration, string source)
+        {
+            // 确保分组功能已初始化
+            EnsureGroupingEnabled();
+
+            var record = new McpExecuteRecord()
+            {
+                name = name,
+                cmd = cmd,
+                result = result,
+                error = error,
+                timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                success = string.IsNullOrEmpty(error),
+                duration = duration,
+                source = source
+            };
+
+            if (useGrouping)
+            {
+                // 使用分组模式，添加到当前分组
+                AddRecordToCurrentGroup(record);
+            }
+            else
+            {
+                // 传统模式，添加到全局记录列表
+                records.Add(record);
+                saveRecords(); // 传统模式下也需要保存
+            }
+        }
+        public void clearRecords()
+        {
+            // 禁止清空全部，仅清空当前分组
+            EnsureGroupingEnabled();
+            ClearCurrentGroupRecords();
+            Debug.Log("[McpExecuteRecordObject] 已清空当前分组记录（禁止清空全部）");
+        }
+        public void saveRecords()
+        {
+            // ScriptableSingleton 使用 Save() 方法来持久化数据
+            Save(true);
+        }
+        public void loadRecords()
+        {
+            records = new List<McpExecuteRecord>();
+        }
+
+        #region 分组管理功能
+
+        /// <summary>
+        /// 确保分组功能已启用并初始化
+        /// 这个方法会在任何记录操作前被调用，确保即使 Debug Window 未开启，记录也能正确保存
+        /// </summary>
+        private void EnsureGroupingEnabled()
+        {
+            // 如果已经初始化过，直接返回
+            if (isInitialized)
+                return;
+
+            // 启用分组功能
+            if (!useGrouping)
+            {
+                useGrouping = true;
+            }
+
+            // 初始化默认分组
+            InitializeDefaultGroup();
+
+            // 如果全局 records 列表中有旧数据，迁移到默认分组
+            if (records.Count > 0)
+            {
+                var defaultGroup = GetGroup("default");
+                if (defaultGroup != null)
+                {
+                    // 迁移旧记录到默认分组
+                    defaultGroup.records.AddRange(records);
+                    records.Clear();
+                    Debug.Log($"[McpExecuteRecordObject] 已将 {defaultGroup.records.Count} 条旧记录迁移到默认分组");
+                }
+            }
+
+            isInitialized = true;
+            saveRecords();
+        }
+
+        /// <summary>
+        /// 初始化默认分组
+        /// </summary>
+        public void InitializeDefaultGroup()
+        {
+            if (recordGroups.Count == 0)
+            {
+                CreateGroup("default", "Default", "Default group, used to store records that are not classified", true);
+            }
+
+            // 确保有默认分组
+            if (!HasGroup("default"))
+            {
+                CreateGroup("default", "Default", "Default group, used to store records that are not classified", true);
+            }
+
+            // 如果当前分组ID无效，重置为默认
+            if (!HasGroup(currentGroupId))
+            {
+                currentGroupId = "default";
+            }
+        }
+
+        /// <summary>
+        /// 创建新分组
+        /// </summary>
+        public bool CreateGroup(string id, string name, string description = "", bool isDefault = false)
+        {
+            if (HasGroup(id))
+            {
+                Debug.LogWarning($"分组ID '{id}' 已存在");
+                return false;
+            }
+
+            var newGroup = new McpExecuteRecordGroup()
+            {
+                id = id,
+                name = name,
+                description = description,
+                createdTime = System.DateTime.Now,
+                isDefault = isDefault
+            };
+
+            recordGroups.Add(newGroup);
+            saveRecords();
+            return true;
+        }
+
+        /// <summary>
+        /// 删除分组
+        /// </summary>
+        public bool DeleteGroup(string groupId)
+        {
+            if (groupId == "default")
+            {
+                Debug.LogWarning("不能删除默认分组");
+                return false;
+            }
+
+            var group = GetGroup(groupId);
+            if (group == null) return false;
+
+            // 将该分组的记录移动到默认分组
+            var defaultGroup = GetGroup("default");
+            if (defaultGroup != null && group.records.Count > 0)
+            {
+                defaultGroup.records.AddRange(group.records);
+            }
+
+            recordGroups.Remove(group);
+
+            // 如果删除的是当前分组，切换到默认分组
+            if (currentGroupId == groupId)
+            {
+                currentGroupId = "default";
+            }
+
+            saveRecords();
+            return true;
+        }
+
+        /// <summary>
+        /// 重命名分组
+        /// </summary>
+        public bool RenameGroup(string groupId, string newName, string newDescription = null)
+        {
+            if (groupId == "default")
+            {
+                Debug.LogWarning("不能重命名默认分组");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(newName))
+            {
+                Debug.LogWarning("分组名称不能为空");
+                return false;
+            }
+
+            var group = GetGroup(groupId);
+            if (group == null)
+            {
+                Debug.LogWarning($"分组 '{groupId}' 不存在");
+                return false;
+            }
+
+            // 检查新名称是否与其他分组重复（除了自己）
+            var existingGroup = recordGroups.Find(g => g.name == newName.Trim() && g.id != groupId);
+            if (existingGroup != null)
+            {
+                Debug.LogWarning($"分组名称 '{newName}' 已被使用");
+                return false;
+            }
+
+            group.name = newName.Trim();
+            if (newDescription != null)
+            {
+                group.description = newDescription.Trim();
+            }
+
+            saveRecords();
+            Debug.Log($"[McpExecuteRecordObject] 分组 '{groupId}' 已重命名为 '{group.name}'");
+            return true;
+        }
+
+        /// <summary>
+        /// 获取分组
+        /// </summary>
+        public McpExecuteRecordGroup GetGroup(string groupId)
+        {
+            return recordGroups.Find(g => g.id == groupId);
+        }
+
+        /// <summary>
+        /// 检查分组是否存在
+        /// </summary>
+        public bool HasGroup(string groupId)
+        {
+            return recordGroups.Exists(g => g.id == groupId);
+        }
+
+        /// <summary>
+        /// 获取当前分组
+        /// </summary>
+        public McpExecuteRecordGroup GetCurrentGroup()
+        {
+            return GetGroup(currentGroupId);
+        }
+
+        /// <summary>
+        /// 切换到指定分组
+        /// </summary>
+        public void SwitchToGroup(string groupId)
+        {
+            if (HasGroup(groupId))
+            {
+                currentGroupId = groupId;
+                saveRecords();
+            }
+        }
+
+        /// <summary>
+        /// 向指定分组添加记录
+        /// </summary>
+        public void AddRecordToGroup(string groupId, McpExecuteRecord record)
+        {
+            var group = GetGroup(groupId);
+            if (group != null)
+            {
+                group.records.Add(record);
+                saveRecords();
+            }
+        }
+
+        /// <summary>
+        /// 向当前分组添加记录
+        /// </summary>
+        public void AddRecordToCurrentGroup(McpExecuteRecord record)
+        {
+            InitializeDefaultGroup(); // 确保有默认分组
+            AddRecordToGroup(currentGroupId, record);
+        }
+
+        /// <summary>
+        /// 移动记录到指定分组
+        /// </summary>
+        public bool MoveRecordToGroup(McpExecuteRecord record, string fromGroupId, string toGroupId)
+        {
+            var fromGroup = GetGroup(fromGroupId);
+            var toGroup = GetGroup(toGroupId);
+
+            if (fromGroup == null || toGroup == null) return false;
+
+            if (fromGroup.records.Remove(record))
+            {
+                toGroup.records.Add(record);
+                saveRecords();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 获取当前分组的记录
+        /// </summary>
+        public List<McpExecuteRecord> GetCurrentGroupRecords()
+        {
+            // 确保分组功能已初始化
+            EnsureGroupingEnabled();
+
+            if (!useGrouping)
+            {
+                return records; // 不使用分组时返回全局记录
+            }
+
+            var currentGroup = GetCurrentGroup();
+            return currentGroup?.records ?? new List<McpExecuteRecord>();
+        }
+
+        /// <summary>
+        /// 清空当前分组的记录
+        /// </summary>
+        public void ClearCurrentGroupRecords()
+        {
+            if (!useGrouping)
+            {
+                records.Clear();
+            }
+            else
+            {
+                var currentGroup = GetCurrentGroup();
+                currentGroup?.records.Clear();
+            }
+            saveRecords();
+        }
+
+        /// <summary>
+        /// 重命名分组
+        /// </summary>
+        public bool RenameGroup(string groupId, string newName)
+        {
+            var group = GetGroup(groupId);
+            if (group != null)
+            {
+                group.name = newName;
+                saveRecords();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 获取分组统计信息
+        /// </summary>
+        public string GetGroupStatistics(string groupId)
+        {
+            var group = GetGroup(groupId);
+            if (group == null) return L.T("Group not found", "分组不存在");
+
+            int successCount = group.records.Count(r => r.success);
+            int errorCount = group.records.Count - successCount;
+
+            return L.IsChinese()
+                ? $"{group.records.Count}个记录 (成功:{successCount} 失败:{errorCount})"
+                : $"{group.records.Count} records (success:{successCount} failed:{errorCount})";
+        }
+
+        #endregion
+
+        #region 主线程调度器
+
+        /// <summary>
+        /// 初始化主线程调度器
+        /// </summary>
+        [InitializeOnLoadMethod]
+        private static void InitializeMainThreadScheduler()
+        {
+            mainThreadId = Thread.CurrentThread.ManagedThreadId;
+            EditorApplication.update += ProcessMainThreadActions;
+        }
+
+        /// <summary>
+        /// 处理主线程操作队列
+        /// </summary>
+        private static void ProcessMainThreadActions()
+        {
+            lock (mainThreadLock)
+            {
+                while (mainThreadActions.Count > 0)
+                {
+                    var action = mainThreadActions.Dequeue();
+                    try
+                    {
+                        action?.Invoke();
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"[McpExecuteRecordObject] 主线程操作执行失败: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 将操作调度到主线程执行
+        /// </summary>
+        private static void ScheduleOnMainThread(System.Action action)
+        {
+            if (action == null) return;
+
+            lock (mainThreadLock)
+            {
+                mainThreadActions.Enqueue(action);
+            }
+        }
+
+        /// <summary>
+        /// 线程安全的保存方法
+        /// </summary>
+        private void saveRecordsThreadSafe()
+        {
+            if (Thread.CurrentThread.ManagedThreadId == mainThreadId) // 主线程
+            {
+                saveRecords();
+            }
+            else
+            {
+                ScheduleOnMainThread(() => saveRecords());
+            }
+        }
+
+        #endregion
+
+        #region HTTP请求记录管理
+
+        /// <summary>
+        /// 添加HTTP请求记录
+        /// </summary>
+        public void AddHttpRequestRecord(string id, string endPoint, DateTime requestTime,
+            string requestContent, string httpMethod = "POST")
+        {
+            var record = new HttpRequestRecord
+            {
+                id = id,
+                endPoint = endPoint,
+                requestTime = requestTime,
+                responseTime = requestTime, // 初始设为请求时间，完成时会更新
+                requestCount = 1,
+                requestContent = requestContent,
+                responseContent = "",
+                success = false, // 初始为false，完成时会更新
+                duration = 0,
+                httpMethod = httpMethod,
+                statusCode = 0
+            };
+
+            lock (httpRecordsLock)
+            {
+                httpRequestRecords.Add(record);
+            }
+            saveRecordsThreadSafe();
+        }
+
+        /// <summary>
+        /// 更新HTTP请求记录的响应信息
+        /// </summary>
+        public void UpdateHttpRequestRecord(string id, string responseContent, bool success,
+            int statusCode, DateTime responseTime)
+        {
+            lock (httpRecordsLock)
+            {
+                var record = httpRequestRecords.FirstOrDefault(r => r.id == id);
+                if (record != null)
+                {
+                    record.responseContent = responseContent;
+                    record.success = success;
+                    record.statusCode = statusCode;
+                    record.responseTime = responseTime;
+                    record.duration = (responseTime - record.requestTime).TotalMilliseconds;
+                }
+            }
+            saveRecordsThreadSafe();
+        }
+
+        /// <summary>
+        /// 获取所有HTTP请求记录
+        /// </summary>
+        public List<HttpRequestRecord> GetHttpRequestRecords()
+        {
+            lock (httpRecordsLock)
+            {
+                return httpRequestRecords.ToList();
+            }
+        }
+
+        /// <summary>
+        /// 清空HTTP请求记录
+        /// </summary>
+        public void ClearHttpRequestRecords()
+        {
+            lock (httpRecordsLock)
+            {
+                httpRequestRecords.Clear();
+            }
+            saveRecordsThreadSafe();
+        }
+
+        /// <summary>
+        /// 清理超过指定时间的HTTP请求记录
+        /// </summary>
+        public void CleanupOldHttpRequestRecords(int maxAgeMinutes = 30)
+        {
+            var cutoffTime = DateTime.Now.AddMinutes(-maxAgeMinutes);
+            List<HttpRequestRecord> recordsToRemove;
+
+            lock (httpRecordsLock)
+            {
+                recordsToRemove = httpRequestRecords
+                    .Where(r => r.responseTime < cutoffTime)
+                    .ToList();
+
+                foreach (var record in recordsToRemove)
+                {
+                    httpRequestRecords.Remove(record);
+                }
+            }
+
+            if (recordsToRemove.Count > 0)
+            {
+                saveRecordsThreadSafe();
+            }
+        }
+
+        /// <summary>
+        /// 获取HTTP请求记录统计信息
+        /// </summary>
+        public string GetHttpRequestStatistics()
+        {
+            lock (httpRecordsLock)
+            {
+                int totalCount = httpRequestRecords.Count;
+                int successCount = httpRequestRecords.Count(r => r.success);
+                int errorCount = totalCount - successCount;
+                double avgDuration = httpRequestRecords.Count > 0 ?
+                    httpRequestRecords.Average(r => r.duration) : 0;
+
+                return $"总计:{totalCount} 成功:{successCount} 失败:{errorCount} 平均耗时:{avgDuration:F2}ms";
+            }
+        }
+
+        #endregion
+    }
+}

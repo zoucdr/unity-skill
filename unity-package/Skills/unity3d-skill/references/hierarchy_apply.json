@@ -1,0 +1,22 @@
+{
+  "func": "hierarchy_apply",
+  "description": "Handle prefab apply and connection operations",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["apply"], "description": "Operation type" },
+      "target_object": { "type": "string", "description": "Target game object hierarchy path" },
+      "apply_type": { "type": "string", "enum": ["connect_to_prefab", "apply_prefab_changes", "break_prefab_connection"], "description": "Connection type" },
+      "prefab_path": { "type": "string", "description": "Prefab path" },
+      "force_apply": { "type": "boolean", "description": "Force create connection (override existing)" }
+    },
+    "required": ["action", "target_object"]
+  },
+  "actions": [
+    { "value": "apply", "description": "Apply prefab changes or manage prefab connections", "requiredParams": ["action", "target_object"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

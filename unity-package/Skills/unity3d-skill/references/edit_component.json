@@ -1,0 +1,24 @@
+{
+  "func": "edit_component",
+  "description": "Edit component properties on GameObjects",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["set_property", "get_property", "list_components"], "description": "Operation type" },
+      "target": { "type": "string", "description": "Target GameObject path" },
+      "component": { "type": "string", "description": "Component type name" },
+      "property": { "type": "string", "description": "Property name" },
+      "value": { "description": "Property value to set" }
+    },
+    "required": ["action", "target", "component"]
+  },
+  "actions": [
+    { "value": "set_property", "description": "Set component property", "requiredParams": ["action", "target", "component", "property", "value"] },
+    { "value": "get_property", "description": "Get component property", "requiredParams": ["action", "target", "component", "property"] },
+    { "value": "list_components", "description": "List all components on GameObject", "requiredParams": ["action", "target"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "func": "edit_texture",
+  "description": "Edit texture properties",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["set_import_settings", "get_info", "set_wrap_mode", "set_filter_mode"], "description": "Operation type" },
+      "target": { "type": "string", "description": "Texture asset path" },
+      "max_size": { "type": "integer", "description": "Maximum texture size" },
+      "compression": { "type": "string", "enum": ["low", "normal", "high"], "description": "Compression quality" },
+      "texture_type": { "type": "string", "enum": ["texture", "normal_map", "sprite", "cursor"], "description": "Texture type" },
+      "wrap_mode": { "type": "string", "enum": ["repeat", "clamp", "mirror"], "description": "Wrap mode" },
+      "filter_mode": { "type": "string", "enum": ["point", "bilinear", "trilinear"], "description": "Filter mode" },
+      "anisotropic": { "type": "integer", "description": "Anisotropic level" }
+    },
+    "required": ["action", "target"]
+  },
+  "actions": [
+    { "value": "set_import_settings", "description": "Set texture import settings", "requiredParams": ["action", "target"] },
+    { "value": "get_info", "description": "Get texture information", "requiredParams": ["action", "target"] },
+    { "value": "set_wrap_mode", "description": "Set texture wrap mode", "requiredParams": ["action", "target", "wrap_mode"] },
+    { "value": "set_filter_mode", "description": "Set texture filter mode", "requiredParams": ["action", "target", "filter_mode"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

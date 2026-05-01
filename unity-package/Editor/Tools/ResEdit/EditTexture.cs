@@ -1,0 +1,426 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+// Migrated from Newtonsoft.Json to SimpleJson
+using UnityEditor;
+using UnityEngine;
+using UniMcp;
+using UniMcp.Models; // For Response class
+
+namespace UniMcp.Tools
+{
+    /// <summary>
+    /// Handles texture import settings and modification operations.
+    /// 对应方法名: manage_texture
+    /// </summary>
+    [ToolName("edit_texture", "Resource Management", "资源管理")]
+    public class EditTexture : StateMethodBase
+    {
+        public override string Description => L.T("Manage texture assets including import and settings", "管理纹理资源，包括导入和设置");
+
+        /// <summary>
+        /// 创建当前方法支持的参数键列表
+        /// </summary>
+        protected override MethodKey[] CreateKeys()
+        {
+            return new MethodKey[]
+            {
+                // 操作类型
+                new MethodStr("action", L.T("Action type", "操作类型"), false)
+                    .SetEnumValues("set_type", "set_sprite_settings", "get_settings"),
+                
+                // 纹理路径
+                new MethodStr("texture_path", L.T("Texture asset path", "纹理资源路径"), false)
+                    .AddExample("Assets/Textures/player.png"),
+                
+                // 纹理类型
+                new MethodStr("texture_type", L.T("Texture type", "纹理类型"))
+                    .SetEnumValues("Default", "NormalMap", "EditorGUIAndLegacy", "Sprite", "Cursor", "Cookie", "Lightmap", "HDR"),
+                
+                // Sprite模式
+                new MethodStr("sprite_mode", L.T("Sprite mode", "Sprite模式"))
+                    .SetEnumValues("Single", "Multiple", "Polygon"),
+                
+                // 每单位像素数
+                new MethodFloat("pixels_per_unit", L.T("Pixels per unit", "每单位像素数"))
+                    .SetRange(0.01f, 2048f)
+                    .AddExample(100.0f),
+                
+                // Sprite轴心
+                new MethodStr("sprite_pivot", L.T("Sprite pivot", "Sprite轴心"))
+                    .SetEnumValues("Center", "TopLeft", "TopCenter", "TopRight", "MiddleLeft", "MiddleCenter", "MiddleRight", "BottomLeft", "BottomCenter", "BottomRight", "Custom"),
+                
+                // 生成物理形状
+                new MethodBool("generate_physics_shape", L.T("Generate physics shape", "生成物理形状")),
+                
+                // 网格类型
+                new MethodStr("mesh_type", L.T("Mesh type", "网格类型"))
+                    .SetEnumValues("FullRect", "Tight"),
+                
+                // 边缘挤出
+                new MethodInt("extrude_edges", L.T("Extrude edges", "边缘挤出"))
+                    .SetRange(0, 32)
+                    .AddExample(1),
+                
+                // 压缩格式
+                new MethodStr("compression", L.T("Compression format", "压缩格式"))
+                    .SetEnumValues("Uncompressed", "LowQuality", "NormalQuality", "HighQuality"),
+                
+                // 最大纹理尺寸
+                new MethodInt("max_texture_size", L.T("Max texture size", "最大纹理尺寸"))
+                    .SetEnumValues("32", "64", "128", "256", "512", "1024", "2048", "4096", "8192"),
+                
+                // 过滤模式
+                new MethodStr("filter_mode", L.T("Filter mode", "过滤模式"))
+                    .SetEnumValues("Point", "Bilinear", "Trilinear"),
+                
+                // 包装模式
+                new MethodStr("wrap_mode", L.T("Wrap mode", "包装模式"))
+                    .SetEnumValues("Repeat", "Clamp", "Mirror", "MirrorOnce"),
+                
+                // 可读写
+                new MethodBool("readable", L.T("Readable", "可读写")),
+                
+                // 生成Mip贴图
+                new MethodBool("generate_mip_maps", L.T("Generate mip maps", "生成Mip贴图")),
+                
+                // sRGB纹理
+                new MethodBool("srgb_texture", L.T("sRGB texture", "sRGB纹理"))
+            };
+        }
+
+        protected override StateTree CreateStateTree()
+        {
+            return StateTreeBuilder
+                .Create()
+                .Key("action")
+                    .Leaf("set_type", HandleSetTypeAction)
+                    .Leaf("set_sprite_settings", HandleSetSpriteSettingsAction)
+                    .Leaf("get_settings", HandleGetSettingsAction)
+                .Build();
+        }
+
+        // --- State Tree Action Handlers ---
+
+        /// <summary>
+        /// 处理设置纹理类型的操作
+        /// </summary>
+        private object HandleSetTypeAction(JsonClass args)
+        {
+            string texturePath = args["texture_path"]?.Value;
+            string textureType = args["texture_type"]?.Value;
+
+            if (string.IsNullOrEmpty(texturePath))
+            {
+                return Response.Error("'texture_path' parameter is required.");
+            }
+
+            if (string.IsNullOrEmpty(textureType))
+            {
+                return Response.Error("'texture_type' parameter is required.");
+            }
+
+            McpLogger.Log($"[ManageTexture] Setting texture type to '{textureType}' for '{texturePath}'");
+            return SetTextureType(texturePath, textureType);
+        }
+
+        /// <summary>
+        /// 处理设置Sprite设置的操作
+        /// </summary>
+        private object HandleSetSpriteSettingsAction(JsonClass args)
+        {
+            string texturePath = args["texture_path"]?.Value;
+
+            if (string.IsNullOrEmpty(texturePath))
+            {
+                return Response.Error("'texture_path' parameter is required.");
+            }
+
+            McpLogger.Log($"[ManageTexture] Setting sprite settings for '{texturePath}'");
+            return SetSpriteSettings(args, texturePath);
+        }
+
+        /// <summary>
+        /// 处理获取纹理设置的操作
+        /// </summary>
+        private object HandleGetSettingsAction(JsonClass args)
+        {
+            string texturePath = args["texture_path"]?.Value;
+
+            if (string.IsNullOrEmpty(texturePath))
+            {
+                return Response.Error("'texture_path' parameter is required.");
+            }
+
+            McpLogger.Log($"[ManageTexture] Getting texture settings for '{texturePath}'");
+            return GetTextureSettings(texturePath);
+        }
+
+        // --- Core Methods ---
+
+        /// <summary>
+        /// 设置纹理类型
+        /// </summary>
+        private object SetTextureType(string texturePath, string textureType)
+        {
+            try
+            {
+                // 获取纹理导入器
+                TextureImporter textureImporter = GetTextureImporter(texturePath);
+                if (textureImporter == null)
+                {
+                    return Response.Error($"Could not get TextureImporter for '{texturePath}'. Make sure the path is correct and points to a texture.");
+                }
+
+                // 解析纹理类型
+                if (!Enum.TryParse<TextureImporterType>(textureType, true, out TextureImporterType type))
+                {
+                    return Response.Error($"Invalid texture type '{textureType}'. Valid types: {string.Join(", ", Enum.GetNames(typeof(TextureImporterType)))}");
+                }
+
+                // 设置纹理类型
+                textureImporter.textureType = type;
+
+                // 如果设置为Sprite，自动配置常用的Sprite设置
+                if (type == TextureImporterType.Sprite)
+                {
+                    textureImporter.spriteImportMode = SpriteImportMode.Single;
+                    textureImporter.spritePixelsPerUnit = 100f;
+                    textureImporter.spritePivot = Vector2.one * 0.5f; // Center
+                }
+
+                // 应用设置并重新导入
+                EditorUtility.SetDirty(textureImporter);
+                textureImporter.SaveAndReimport();
+
+                McpLogger.Log($"[ManageTexture] Successfully set texture type to '{textureType}' for '{texturePath}'");
+                return Response.Success($"Texture type set to '{textureType}' for '{texturePath}'.");
+            }
+            catch (Exception e)
+            {
+                McpLogger.Log($"[ManageTexture] Error setting texture type: {e.Message}");
+                return Response.Error($"Error setting texture type: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 设置Sprite设置
+        /// </summary>
+        private object SetSpriteSettings(JsonClass args, string texturePath)
+        {
+            try
+            {
+                // 获取纹理导入器
+                TextureImporter textureImporter = GetTextureImporter(texturePath);
+                if (textureImporter == null)
+                {
+                    return Response.Error($"Could not get TextureImporter for '{texturePath}'. Make sure the path is correct and points to a texture.");
+                }
+
+                // 确保是Sprite类型
+                if (textureImporter.textureType != TextureImporterType.Sprite)
+                {
+                    textureImporter.textureType = TextureImporterType.Sprite;
+                }
+
+                // 设置Sprite模式
+                string spriteMode = args["sprite_mode"]?.Value;
+                if (!string.IsNullOrEmpty(spriteMode))
+                {
+                    if (Enum.TryParse<SpriteImportMode>(spriteMode, true, out SpriteImportMode mode))
+                    {
+                        textureImporter.spriteImportMode = mode;
+                    }
+                }
+
+                // 设置每单位像素数
+                float pixelsPerUnit = args["pixels_per_unit"].AsFloatDefault(100f);
+                textureImporter.spritePixelsPerUnit = pixelsPerUnit;
+
+                // 设置轴心点
+                string spritePivot = args["sprite_pivot"]?.Value;
+                if (!string.IsNullOrEmpty(spritePivot))
+                {
+                    Vector2 pivot = GetPivotVector(spritePivot);
+                    textureImporter.spritePivot = pivot;
+                }
+
+                // 注意：某些高级Sprite设置可能在不同Unity版本中不可用
+                // 这些设置通常通过Unity Editor UI手动配置
+
+                // 设置压缩和质量
+                SetTextureCompressionSettings(textureImporter, args);
+
+                // 设置其他通用设置
+                SetGeneralTextureSettings(textureImporter, args);
+
+                // 应用设置并重新导入
+                EditorUtility.SetDirty(textureImporter);
+                textureImporter.SaveAndReimport();
+
+                McpLogger.Log($"[ManageTexture] Successfully applied sprite settings to '{texturePath}'");
+                return Response.Success($"Sprite settings applied to '{texturePath}'.");
+            }
+            catch (Exception e)
+            {
+                McpLogger.Log($"[ManageTexture] Error setting sprite settings: {e.Message}");
+                return Response.Error($"Error setting sprite settings: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 获取纹理设置
+        /// </summary>
+        private object GetTextureSettings(string texturePath)
+        {
+            try
+            {
+                TextureImporter textureImporter = GetTextureImporter(texturePath);
+                if (textureImporter == null)
+                {
+                    return Response.Error($"Could not get TextureImporter for '{texturePath}'. Make sure the path is correct and points to a texture.");
+                }
+
+                var settings = new
+                {
+                    textureType = textureImporter.textureType.ToString(),
+                    spriteImportMode = textureImporter.spriteImportMode.ToString(),
+                    spritePixelsPerUnit = textureImporter.spritePixelsPerUnit,
+                    spritePivot = textureImporter.spritePivot,
+                    maxTextureSize = textureImporter.maxTextureSize,
+                    textureCompression = textureImporter.textureCompression.ToString(),
+                    filterMode = textureImporter.filterMode.ToString(),
+                    wrapMode = textureImporter.wrapMode.ToString(),
+                    isReadable = textureImporter.isReadable,
+                    mipmapEnabled = textureImporter.mipmapEnabled,
+                    sRGBTexture = textureImporter.sRGBTexture
+                };
+
+                return Response.Success($"Retrieved texture settings for '{texturePath}'.", settings);
+            }
+            catch (Exception e)
+            {
+                McpLogger.Log($"[ManageTexture] Error getting texture settings: {e.Message}");
+                return Response.Error($"Error getting texture settings: {e.Message}");
+            }
+        }
+
+        // --- Helper Methods ---
+
+        /// <summary>
+        /// 获取纹理导入器
+        /// </summary>
+        private TextureImporter GetTextureImporter(string texturePath)
+        {
+            try
+            {
+                return AssetImporter.GetAtPath(texturePath) as TextureImporter;
+            }
+            catch (Exception e)
+            {
+                McpLogger.Log($"[ManageTexture] Error getting TextureImporter: {e.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 获取轴心点向量
+        /// </summary>
+        private Vector2 GetPivotVector(string pivotName)
+        {
+            switch (pivotName.ToLower())
+            {
+                case "center":
+                case "middlecenter":
+                    return new Vector2(0.5f, 0.5f);
+                case "topleft":
+                    return new Vector2(0f, 1f);
+                case "topcenter":
+                    return new Vector2(0.5f, 1f);
+                case "topright":
+                    return new Vector2(1f, 1f);
+                case "middleleft":
+                    return new Vector2(0f, 0.5f);
+                case "middleright":
+                    return new Vector2(1f, 0.5f);
+                case "bottomleft":
+                    return new Vector2(0f, 0f);
+                case "bottomcenter":
+                    return new Vector2(0.5f, 0f);
+                case "bottomright":
+                    return new Vector2(1f, 0f);
+                default:
+                    return new Vector2(0.5f, 0.5f); // Default to center
+            }
+        }
+
+        /// <summary>
+        /// 设置纹理压缩设置
+        /// </summary>
+        private void SetTextureCompressionSettings(TextureImporter textureImporter, JsonClass args)
+        {
+            // 设置压缩格式
+            string compression = args["compression"]?.Value;
+            if (!string.IsNullOrEmpty(compression))
+            {
+                switch (compression.ToLower())
+                {
+                    case "uncompressed":
+                        textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
+                        break;
+                    case "lowquality":
+                        textureImporter.textureCompression = TextureImporterCompression.CompressedLQ;
+                        break;
+                    case "normalquality":
+                        textureImporter.textureCompression = TextureImporterCompression.Compressed;
+                        break;
+                    case "highquality":
+                        textureImporter.textureCompression = TextureImporterCompression.CompressedHQ;
+                        break;
+                }
+            }
+
+            // 设置最大纹理尺寸
+            int maxSize = args["max_texture_size"].AsIntDefault(2048);
+            textureImporter.maxTextureSize = maxSize;
+        }
+
+        /// <summary>
+        /// 设置通用纹理设置
+        /// </summary>
+        private void SetGeneralTextureSettings(TextureImporter textureImporter, JsonClass args)
+        {
+            // 设置过滤模式
+            string filterMode = args["filter_mode"]?.Value;
+            if (!string.IsNullOrEmpty(filterMode))
+            {
+                if (Enum.TryParse<FilterMode>(filterMode, true, out FilterMode mode))
+                {
+                    textureImporter.filterMode = mode;
+                }
+            }
+
+            // 设置包装模式
+            string wrapMode = args["wrap_mode"]?.Value;
+            if (!string.IsNullOrEmpty(wrapMode))
+            {
+                if (Enum.TryParse<TextureWrapMode>(wrapMode, true, out TextureWrapMode mode))
+                {
+                    textureImporter.wrapMode = mode;
+                }
+            }
+
+            // 设置是否可读
+            bool readable = args["readable"].AsBoolDefault(false);
+            textureImporter.isReadable = readable;
+
+            // 设置是否生成Mip贴图
+            bool generateMipMaps = args["generate_mip_maps"].AsBoolDefault(true);
+            textureImporter.mipmapEnabled = generateMipMaps;
+
+            // 设置sRGB纹理
+            bool srgbTexture = args["srgb_texture"].AsBoolDefault(true);
+            textureImporter.sRGBTexture = srgbTexture;
+        }
+    }
+}

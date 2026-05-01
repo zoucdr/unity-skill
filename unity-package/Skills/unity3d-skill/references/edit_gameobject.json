@@ -1,0 +1,29 @@
+{
+  "func": "edit_gameobject",
+  "description": "Edit GameObject properties",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["set_property", "get_property", "add_component", "remove_component", "set_transform"], "description": "Operation type" },
+      "target": { "type": "string", "description": "Target GameObject path or name" },
+      "property": { "type": "string", "description": "Property name to set/get" },
+      "value": { "description": "Property value" },
+      "component": { "type": "string", "description": "Component type to add/remove" },
+      "position": { "type": "array", "items": { "type": "number" }, "description": "Transform position [x, y, z]" },
+      "rotation": { "type": "array", "items": { "type": "number" }, "description": "Transform rotation [x, y, z]" },
+      "scale": { "type": "array", "items": { "type": "number" }, "description": "Transform scale [x, y, z]" }
+    },
+    "required": ["action", "target"]
+  },
+  "actions": [
+    { "value": "set_property", "description": "Set a GameObject property", "requiredParams": ["action", "target", "property", "value"] },
+    { "value": "get_property", "description": "Get a GameObject property", "requiredParams": ["action", "target", "property"] },
+    { "value": "add_component", "description": "Add a component to GameObject", "requiredParams": ["action", "target", "component"] },
+    { "value": "remove_component", "description": "Remove a component from GameObject", "requiredParams": ["action", "target", "component"] },
+    { "value": "set_transform", "description": "Set transform properties", "requiredParams": ["action", "target"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

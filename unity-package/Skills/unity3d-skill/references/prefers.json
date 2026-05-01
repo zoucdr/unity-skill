@@ -1,0 +1,26 @@
+{
+  "func": "prefers",
+  "description": "Manage EditorPrefs and PlayerPrefs",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["get", "set", "delete", "list", "clear"], "description": "Operation type" },
+      "pref_type": { "type": "string", "enum": ["editor", "player"], "description": "Preference type: editor (EditorPrefs) or player (PlayerPrefs)" },
+      "key": { "type": "string", "description": "Preference key" },
+      "value": { "description": "Preference value" },
+      "value_type": { "type": "string", "enum": ["string", "int", "float"], "description": "Value type" }
+    },
+    "required": ["action", "pref_type"]
+  },
+  "actions": [
+    { "value": "get", "description": "Get preference value", "requiredParams": ["action", "pref_type", "key"] },
+    { "value": "set", "description": "Set preference value", "requiredParams": ["action", "pref_type", "key", "value"] },
+    { "value": "delete", "description": "Delete preference", "requiredParams": ["action", "pref_type", "key"] },
+    { "value": "list", "description": "List all preferences", "requiredParams": ["action", "pref_type"] },
+    { "value": "clear", "description": "Clear all preferences", "requiredParams": ["action", "pref_type"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

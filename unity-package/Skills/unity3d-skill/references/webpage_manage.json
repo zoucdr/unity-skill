@@ -1,0 +1,30 @@
+{
+  "func": "webpage_manage",
+  "description": "Manage web pages",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["add", "remove", "update", "search", "categories", "open", "details"], "description": "Operation type" },
+      "url": { "type": "string", "description": "Website URL" },
+      "description": { "type": "string", "description": "Website name or description" },
+      "category": { "type": "string", "description": "Category label (default: \"默认\")" },
+      "id": { "type": "integer", "description": "Web page unique ID (for remove/update)" },
+      "pattern": { "type": "string", "description": "Regex pattern (for search, matches URL, description, category, note)" },
+      "note": { "type": "string", "description": "Note information" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "add", "description": "Add a new web page", "requiredParams": ["action", "url"] },
+    { "value": "remove", "description": "Remove web page", "requiredParams": ["action", "id"] },
+    { "value": "update", "description": "Update web page info", "requiredParams": ["action", "id"] },
+    { "value": "search", "description": "Search web pages by pattern", "requiredParams": ["action", "pattern"] },
+    { "value": "categories", "description": "List all categories", "requiredParams": ["action"] },
+    { "value": "open", "description": "Open web page", "requiredParams": ["action"] },
+    { "value": "details", "description": "Get web page details", "requiredParams": ["action", "id"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

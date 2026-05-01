@@ -1,0 +1,12 @@
+{
+  "name": "io.uframe.unity3d-mcp",
+  "version": "1.1.0",
+  "displayName": "UniMCP",
+  "description": "unity3d mcp system!",
+  "unity": "2021.3",
+  "documentationUrl": "https://zoucdr.github.io/unity3d-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zoucdr/unity3d-mcp"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "func": "project_search",
+  "description": "Search assets in project window",
+  "args": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string", "description": "Search keywords" },
+      "search_target": { "type": "string", "enum": ["asset", "folder", "script", "texture", "material", "prefab", "scene", "audio", "model"], "description": "Search type" },
+      "directory": { "type": "string", "description": "Search path (relative to Assets)" },
+      "file_extension": { "type": "string", "description": "File extension filter: cs, mat, prefab, unity, png, jpg, fbx, wav, mp3" },
+      "case_sensitive": { "type": "boolean", "description": "Case sensitive search (default: false)" },
+      "recursive": { "type": "boolean", "description": "Recursive search subfolders (default: true)" },
+      "include_meta": { "type": "boolean", "description": "Include .meta files (default: false)" },
+      "max_results": { "type": "integer", "description": "Maximum results (default: 100)" }
+    },
+    "required": ["query"]
+  },
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

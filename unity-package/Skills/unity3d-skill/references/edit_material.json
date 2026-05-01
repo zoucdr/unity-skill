@@ -1,0 +1,28 @@
+{
+  "func": "edit_material",
+  "description": "Edit material properties",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["set_property", "get_property", "set_shader", "set_color", "set_texture"], "description": "Operation type" },
+      "target": { "type": "string", "description": "Material path or GameObject with material" },
+      "property": { "type": "string", "description": "Property name" },
+      "value": { "description": "Property value" },
+      "shader_name": { "type": "string", "description": "Shader name (for set_shader)" },
+      "color": { "type": "array", "items": { "type": "number" }, "description": "Color RGBA [r, g, b, a]" },
+      "texture_path": { "type": "string", "description": "Texture asset path" }
+    },
+    "required": ["action", "target"]
+  },
+  "actions": [
+    { "value": "set_property", "description": "Set material property", "requiredParams": ["action", "target", "property", "value"] },
+    { "value": "get_property", "description": "Get material property", "requiredParams": ["action", "target", "property"] },
+    { "value": "set_shader", "description": "Change material shader", "requiredParams": ["action", "target", "shader_name"] },
+    { "value": "set_color", "description": "Set material color", "requiredParams": ["action", "target", "color"] },
+    { "value": "set_texture", "description": "Set material texture", "requiredParams": ["action", "target", "texture_path"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

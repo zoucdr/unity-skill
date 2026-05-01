@@ -1,0 +1,26 @@
+{
+  "func": "batch_call",
+  "description": "Batch execution of multiple function calls in sequence",
+  "args": {
+    "type": "object",
+    "properties": {
+      "args": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "func": { "type": "string", "description": "Function name to call" },
+            "args": { "type": "object", "description": "Arguments for the function" }
+          },
+          "required": ["func", "args"]
+        },
+        "description": "List of function calls to execute sequentially"
+      }
+    },
+    "required": ["args"]
+  },
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": { "type": "array" } } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

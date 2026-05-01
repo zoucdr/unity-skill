@@ -1,0 +1,24 @@
+{
+  "func": "edit_scene",
+  "description": "Manage scene assets",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["load", "save", "create", "get_hierarchy"], "description": "Operation type" },
+      "name": { "type": "string", "description": "Scene name" },
+      "path": { "type": "string", "description": "Scene asset path" },
+      "build_index": { "type": "integer", "description": "Build index" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "load", "description": "Load a scene", "requiredParams": ["action"] },
+    { "value": "save", "description": "Save current scene", "requiredParams": ["action"] },
+    { "value": "create", "description": "Create a new scene", "requiredParams": ["action"] },
+    { "value": "get_hierarchy", "description": "Get scene hierarchy", "requiredParams": ["action"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

@@ -1,0 +1,12 @@
+Assets:
+  - Extends:
+    - CustomPrompts
+    - CustomResources
+    - CustomTools:
+      - AssetIndex
+      - Figma:
+        - Editor
+      - WebPage
+  - Resources:
+    - UniMcp
+  - Scripts

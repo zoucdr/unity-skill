@@ -1,0 +1,17 @@
+{
+  "func": "object_delete",
+  "description": "Delete game objects or assets",
+  "args": {
+    "type": "object",
+    "properties": {
+      "path": { "type": "string", "description": "Object hierarchy path" },
+      "instance_id": { "type": "string", "description": "Object instance ID" },
+      "confirm": { "type": "boolean", "description": "Force confirmation: true=always confirm, false=smart confirm (<=3 auto, >3 dialog)" }
+    },
+    "required": ["path"]
+  },
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

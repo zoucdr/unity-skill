@@ -1,0 +1,23 @@
+{
+  "func": "source_location",
+  "description": "Locate resources in file explorer or Unity project",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["reveal", "locate", "find_references"], "description": "Operation type" },
+      "target": { "type": "string", "description": "Asset or GameObject path" },
+      "open_explorer": { "type": "boolean", "description": "Open in file explorer (default: true)" },
+      "focus_project": { "type": "boolean", "description": "Focus Unity project window" }
+    },
+    "required": ["action", "target"]
+  },
+  "actions": [
+    { "value": "reveal", "description": "Reveal asset in file explorer", "requiredParams": ["action", "target"] },
+    { "value": "locate", "description": "Locate in Unity project view", "requiredParams": ["action", "target"] },
+    { "value": "find_references", "description": "Find all references to asset", "requiredParams": ["action", "target"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

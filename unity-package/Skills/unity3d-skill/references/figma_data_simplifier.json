@@ -1,0 +1,33 @@
+{
+  "func": "figma_data_simplifier",
+  "description": "Simplify Figma data for Unity UI conversion",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["simplify", "export", "preview"], "description": "Operation type" },
+      "figma_file": { "type": "string", "description": "Figma file key" },
+      "node_ids": { "type": "array", "items": { "type": "string" }, "description": "Array of node IDs to simplify" },
+      "output_path": { "type": "string", "description": "Output JSON path" },
+      "options": {
+        "type": "object",
+        "properties": {
+          "remove_hidden": { "type": "boolean", "description": "Remove hidden nodes" },
+          "flatten_groups": { "type": "boolean", "description": "Flatten group structure" },
+          "optimize_frames": { "type": "boolean", "description": "Optimize frame data" },
+          "merge_text": { "type": "boolean", "description": "Merge text styles" }
+        },
+        "description": "Simplification options"
+      }
+    },
+    "required": ["action", "figma_file"]
+  },
+  "actions": [
+    { "value": "simplify", "description": "Simplify Figma data structure", "requiredParams": ["action", "figma_file"] },
+    { "value": "export", "description": "Export simplified data", "requiredParams": ["action", "figma_file", "output_path"] },
+    { "value": "preview", "description": "Preview simplified result", "requiredParams": ["action", "figma_file"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

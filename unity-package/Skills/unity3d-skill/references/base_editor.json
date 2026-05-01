@@ -1,0 +1,27 @@
+{
+  "func": "base_editor",
+  "description": "Manage Unity editor state and control",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["get_state", "get_windows", "get_selection", "execute_menu", "get_menu_items"], "description": "Operation type" },
+      "menu_path": { "type": "string", "description": "Menu path (for execute_menu)" },
+      "root_path": { "type": "string", "description": "Root menu path (for get_menu_items, default: \"\")" },
+      "include_submenus": { "type": "boolean", "description": "Include submenus (for get_menu_items, default: false)" },
+      "verify_exists": { "type": "boolean", "description": "Verify menu item exists (for get_menu_items, default: false)" },
+      "wait_for_completion": { "type": "boolean", "description": "Wait for operation to complete (default: true)" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "get_state", "description": "Get current Unity editor state", "requiredParams": ["action"] },
+    { "value": "get_windows", "description": "Get list of open editor windows", "requiredParams": ["action"] },
+    { "value": "get_selection", "description": "Get currently selected objects", "requiredParams": ["action"] },
+    { "value": "execute_menu", "description": "Execute a Unity menu item", "requiredParams": ["action", "menu_path"] },
+    { "value": "get_menu_items", "description": "Get available menu items", "requiredParams": ["action"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

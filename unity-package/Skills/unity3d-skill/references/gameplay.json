@@ -1,0 +1,51 @@
+{
+  "func": "gameplay",
+  "description": "Control gameplay, simulate input, process images",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["play", "pause", "stop", "screenshot", "simulate_click", "simulate_drag", "set_size", "get_info", "compress_image"], "description": "Operation type" },
+      "x": { "type": "integer", "description": "X coordinate for input" },
+      "y": { "type": "integer", "description": "Y coordinate for input" },
+      "target_x": { "type": "integer", "description": "Target X (for drag)" },
+      "target_y": { "type": "integer", "description": "Target Y (for drag)" },
+      "button": { "type": "integer", "description": "Mouse button: 0=left, 1=right, 2=middle" },
+      "duration": { "type": "number", "description": "Drag duration (seconds)" },
+      "delay": { "type": "number", "description": "Delay before action (seconds)" },
+      "key_code": { "type": "string", "description": "Keyboard key code" },
+      "delta": { "type": "number", "description": "Scroll delta" },
+      "save_path": { "type": "string", "description": "Screenshot save path" },
+      "region_x": { "type": "integer", "description": "Screenshot region X" },
+      "region_y": { "type": "integer", "description": "Screenshot region Y" },
+      "region_width": { "type": "integer", "description": "Screenshot region width" },
+      "region_height": { "type": "integer", "description": "Screenshot region height" },
+      "width": { "type": "integer", "description": "Game window width" },
+      "height": { "type": "integer", "description": "Game window height" },
+      "size_name": { "type": "string", "description": "Predefined size name" },
+      "format": { "type": "string", "enum": ["PNG", "JPG"], "description": "Image format" },
+      "quality": { "type": "integer", "description": "JPG quality (1-100)" },
+      "scale": { "type": "number", "description": "Image scale factor" },
+      "source_path": { "type": "string", "description": "Source image path (for compress)" },
+      "compress_ratio": { "type": "number", "description": "Compression ratio (0.1-1.0)" },
+      "count": { "type": "integer", "description": "Batch operation count" },
+      "interval": { "type": "number", "description": "Batch operation interval" },
+      "base_path": { "type": "string", "description": "Base path for batch" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "play", "description": "Start playing the game", "requiredParams": ["action"] },
+    { "value": "pause", "description": "Pause the game", "requiredParams": ["action"] },
+    { "value": "stop", "description": "Stop the game", "requiredParams": ["action"] },
+    { "value": "screenshot", "description": "Take a screenshot", "requiredParams": ["action"] },
+    { "value": "simulate_click", "description": "Simulate mouse click", "requiredParams": ["action", "x", "y"] },
+    { "value": "simulate_drag", "description": "Simulate mouse drag", "requiredParams": ["action", "x", "y", "target_x", "target_y"] },
+    { "value": "set_size", "description": "Set game window size", "requiredParams": ["action"] },
+    { "value": "get_info", "description": "Get game info", "requiredParams": ["action"] },
+    { "value": "compress_image", "description": "Compress an image", "requiredParams": ["action", "source_path"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

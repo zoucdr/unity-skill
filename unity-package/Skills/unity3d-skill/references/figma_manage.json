@@ -1,0 +1,31 @@
+{
+  "func": "figma_manage",
+  "description": "Manage Figma documents",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["fetch_document", "download_images", "preview", "get_conversion_rules"], "description": "Operation type" },
+      "file_key": { "type": "string", "description": "Figma file key" },
+      "node_id": { "type": "string", "description": "Node ID" },
+      "local_json_path": { "type": "string", "description": "Local JSON file path" },
+      "save_path": { "type": "string", "description": "Save path" },
+      "image_format": { "type": "string", "enum": ["png", "jpg", "svg", "pdf"], "description": "Image format" },
+      "image_scale": { "type": "number", "description": "Image scale factor" },
+      "include_children": { "type": "boolean", "description": "Include child nodes" },
+      "ui_framework": { "type": "string", "enum": ["ugui", "uitoolkit", "all"], "description": "UI framework" },
+      "use_component_pfb": { "type": "boolean", "description": "Use existing prefabs" },
+      "node_imgs": { "type": "object", "description": "Node image mapping" }
+    },
+    "required": ["action"]
+  },
+  "actions": [
+    { "value": "fetch_document", "description": "Fetch Figma document structure", "requiredParams": ["action", "file_key"] },
+    { "value": "download_images", "description": "Download images from Figma", "requiredParams": ["action", "file_key"] },
+    { "value": "preview", "description": "Preview Figma designs", "requiredParams": ["action", "file_key"] },
+    { "value": "get_conversion_rules", "description": "Get conversion rules for UI", "requiredParams": ["action"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

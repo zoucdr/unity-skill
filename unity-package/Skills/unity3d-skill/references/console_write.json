@@ -1,0 +1,26 @@
+{
+  "func": "console_write",
+  "description": "Write log messages to Unity editor console",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["log", "warning", "error", "assert", "exception"], "description": "Message type" },
+      "message": { "type": "string", "description": "Log message content" },
+      "condition": { "type": "string", "description": "Assert condition expression (only for assert type)" },
+      "context": { "type": "string", "description": "Context object name for locating in console" },
+      "tag": { "type": "string", "description": "Tag for categorization and filtering" }
+    },
+    "required": ["action", "message"]
+  },
+  "actions": [
+    { "value": "log", "description": "Info message", "requiredParams": ["action", "message"] },
+    { "value": "warning", "description": "Warning message", "requiredParams": ["action", "message"] },
+    { "value": "error", "description": "Error message", "requiredParams": ["action", "message"] },
+    { "value": "assert", "description": "Assertion message", "requiredParams": ["action", "message"] },
+    { "value": "exception", "description": "Exception message", "requiredParams": ["action", "message"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}

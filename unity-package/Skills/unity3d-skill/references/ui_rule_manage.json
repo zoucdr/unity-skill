@@ -1,0 +1,29 @@
+{
+  "func": "ui_rule_manage",
+  "description": "Manage UI creation schemes and modification records",
+  "args": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["record_modify", "record_renames", "get_renames", "record_download_sprites", "get_download_sprites"], "description": "Operation type" },
+      "name": { "type": "string", "description": "UI name" },
+      "modify_desc": { "type": "string", "description": "Modification description" },
+      "names_data": { "type": "object", "description": "Node name data" },
+      "properties": { "type": "object", "description": "Properties data" },
+      "sprites_data": { "type": "object", "description": "Sprites data" },
+      "save_path": { "type": "string", "description": "Save path" },
+      "auto_load_sprites": { "type": "boolean", "description": "Auto load sprites" }
+    },
+    "required": ["action", "name"]
+  },
+  "actions": [
+    { "value": "record_modify", "description": "Record UI modifications", "requiredParams": ["action", "name"] },
+    { "value": "record_renames", "description": "Record node renames", "requiredParams": ["action", "name", "names_data"] },
+    { "value": "get_renames", "description": "Get rename records", "requiredParams": ["action", "name"] },
+    { "value": "record_download_sprites", "description": "Record downloaded sprites", "requiredParams": ["action", "name", "sprites_data"] },
+    { "value": "get_download_sprites", "description": "Get downloaded sprites", "requiredParams": ["action", "name"] }
+  ],
+  "response": {
+    "success": { "type": "object", "properties": { "success": { "type": "boolean", "const": true }, "data": {} } },
+    "failure": { "type": "object", "properties": { "success": { "type": "boolean", "const": false }, "message": { "type": "string" }, "error": { "type": "string" } } }
+  }
+}
